@@ -2,13 +2,11 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 
-import SignUp from './pages/SignUp';
-import LogIn from './pages/LogIn';
-import Dashboard from './pages/Dashboard';
-
 import PublicRoute from './components/PublicRoute';
 import ProtectedRoute from './components/ProtectedRoute';
+import PageContainer from './components/PageContainer';
 
+import { PUBLIC_ROUTES, PROTECTED_ROUTES } from './router/routes';
 import { AUTH_LINKS, APP_LINKS } from './constants/links';
 
 const App = () => {
@@ -17,15 +15,21 @@ const App = () => {
       <Routes>
         <Route path="/" element={<ProtectedRoute />}>
           <Route path="/" element={<Navigate replace to={APP_LINKS.DASHBOARD} />} />
-          <Route path={APP_LINKS.DASHBOARD} element={<Dashboard />} />
+          {PROTECTED_ROUTES.map(({ path, component }, index) => (
+            <Route
+              key={index}
+              path={path}
+              element={<PageContainer component={component} />}
+            />
+          ))}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
 
         <Route path="/" element={<PublicRoute />}>
-          <Route path={AUTH_LINKS.SIGNUP} element={<SignUp />} />
-          <Route path={AUTH_LINKS.LOGIN} element={<LogIn />} />
+          {PUBLIC_ROUTES.map(({ path, component }, index) => (
+            <Route key={index} path={path} element={component} />
+          ))}
         </Route>
-
         <Route path="/" element={<Navigate to={AUTH_LINKS.LOGIN} />} />
       </Routes>
       <ToastContainer position="top-center" autoClose={3000} theme="colored" />

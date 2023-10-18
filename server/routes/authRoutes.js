@@ -7,6 +7,7 @@ require('dotenv').config();
 
 const UserModel = require('../models/Users');
 const handleError = require('../helpers/handleError');
+const auth = require('../auth');
 
 router.post('/signup', async (req, res) => {
   const { email, password } = req.body;
@@ -42,6 +43,16 @@ router.post('/login', async (req, res) => {
       message: 'Login Successful',
       email: user.email,
       token,
+    });
+  } catch (error) {
+    handleError(res, 500, 'Internal server error');
+  }
+});
+
+router.delete('/logout', auth, async (req, res) => {
+  try {
+    res.status(200).json({
+      message: 'Logout Successful',
     });
   } catch (error) {
     handleError(res, 500, 'Internal server error');

@@ -1,11 +1,10 @@
 import React from 'react';
+import { Outlet } from 'react-router-dom';
 
-import App from '../../App';
-
-const AppLayout = props => {
+const AppLayout = () => {
   return (
-    <div className="bg-blue-600">
-      <App {...props} />
+    <div className="flex flex-col h-full">
+      <Outlet />
     </div>
   );
 };
