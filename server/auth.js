@@ -6,8 +6,6 @@ module.exports = async (request, response, next) => {
   try {
     const token = await request.headers.authorization.split(' ')[1];
 
-    console.log(token);
-
     const decodedToken = await jwt.verify(token, process.env.JWT_SECRET_KEY);
 
     const user = await decodedToken;
