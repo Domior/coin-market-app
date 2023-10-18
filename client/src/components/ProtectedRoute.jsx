@@ -1,18 +1,19 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 
-import { SessionStorageService } from '../services/SessionStorageService';
-import { ACCESS_TOKEN_KEY } from '../constants/storage';
+import AppLayout from './layout/AppLayout';
+
 import { AUTH_LINKS } from '../constants/links';
+import { useAuth } from '../hooks/useAuth';
 
 const ProtectedRoute = () => {
-  const authenticated = SessionStorageService.getItem(ACCESS_TOKEN_KEY);
+  const { authenticated } = useAuth();
 
   if (!authenticated) {
     return <Navigate to={AUTH_LINKS.LOGIN} replace />;
   }
 
-  return <Outlet />;
+  return <AppLayout />;
 };
 
 export default ProtectedRoute;

@@ -1,4 +1,4 @@
-import { baseInstance } from './index';
+import { commonInstance, baseInstance } from './index';
 
 export class AuthService {
   /**
@@ -8,7 +8,7 @@ export class AuthService {
    * @param {string} body.password
    */
   static async signUp(body) {
-    return baseInstance.post(`/signup`, body);
+    return commonInstance.post(`/signup`, body);
   }
 
   /**
@@ -18,6 +18,13 @@ export class AuthService {
    * @param {string} body.password
    */
   static async logIn(body) {
-    return baseInstance.post(`/login`, body);
+    return commonInstance.post(`/login`, body);
+  }
+
+  /**
+   * logout
+   */
+  static async logOut() {
+    return baseInstance.delete(`/logout`);
   }
 }

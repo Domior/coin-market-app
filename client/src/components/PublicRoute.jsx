@@ -1,14 +1,19 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 
-import { SessionStorageService } from '../services/SessionStorageService';
-import { ACCESS_TOKEN_KEY } from '../constants/storage';
+import AuthLayout from './layout/AuthLayout';
+
 import { APP_LINKS } from '../constants/links';
+import { useAuth } from '../hooks/useAuth';
 
 const PublicRoute = () => {
-  const authenticated = SessionStorageService.getItem(ACCESS_TOKEN_KEY);
+  const { authenticated } = useAuth();
 
-  return authenticated ? <Navigate to={APP_LINKS.DASHBOARD} /> : <Outlet />;
+  if (authenticated) {
+    return <Navigate to={APP_LINKS.DASHBOARD} replace />;
+  }
+
+  return <AuthLayout />;
 };
 
 export default PublicRoute;
