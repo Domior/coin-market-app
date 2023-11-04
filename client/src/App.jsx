@@ -16,21 +16,17 @@ const App = () => {
         <Route path="/" element={<ProtectedRoute />}>
           <Route path="/" element={<Navigate replace to={APP_LINKS.DASHBOARD} />} />
           {PROTECTED_ROUTES.map(({ path, component }, index) => (
-            <Route
-              key={index}
-              path={path}
-              element={<PageContainer component={component} />}
-            />
+            <Route key={index} path={path} element={<PageContainer component={component} />} />
           ))}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
 
         <Route path="/" element={<PublicRoute />}>
+          <Route path="/" element={<Navigate to={AUTH_LINKS.LOGIN} />} />
           {PUBLIC_ROUTES.map(({ path, component }, index) => (
             <Route key={index} path={path} element={component} />
           ))}
         </Route>
-        <Route path="/" element={<Navigate to={AUTH_LINKS.LOGIN} />} />
       </Routes>
       <ToastContainer position="top-center" autoClose={3000} theme="colored" />
     </>
