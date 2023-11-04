@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Typography, Avatar, Table } from 'antd';
 
@@ -9,12 +9,15 @@ import { CoinsService } from '../services/CoinsService';
 import { formatNumber } from '../helpers/formatNumber';
 import { stringSort } from '../helpers/stringSort';
 import { numberSort } from '../helpers/numberSort';
+import { APP_LINKS } from '../constants/links';
 
 const { Text } = Typography;
 
 const REQUEST_INTERVAL = 45000; // 45 seconds
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+
   const [isLoading, setIsLoading] = useState(false);
 
   const [coins, setCoins] = useState([]);
@@ -87,11 +90,22 @@ const Dashboard = () => {
     },
   ];
 
+  const handleRowClick = ({ id }) => navigate(`${APP_LINKS.COIN}/${id}`);
+
   if (isLoading) return <Loader />;
 
   return (
     <div className="w-full max-w-7xl pt-8">
-      <Table rowKey="id" columns={columns} dataSource={coins} onChange={onChange} />
+      <Table
+        rowKey="id"
+        rowClassName="cursor-pointer"
+        columns={columns}
+        dataSource={coins}
+        onChange={onChange}
+        onRow={record => ({
+          onClick: () => handleRowClick(record),
+        })}
+      />
     </div>
   );
 };
