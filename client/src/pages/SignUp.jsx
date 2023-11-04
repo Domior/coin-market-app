@@ -13,7 +13,7 @@ const { Title } = Typography;
 const SignUp = () => {
   const navigate = useNavigate();
 
-  const onFinish = async values => {
+  const onSubmit = async values => {
     const { email, password } = values;
     try {
       const {
@@ -42,7 +42,7 @@ const SignUp = () => {
           span: 16,
         }}
         className="mt-10 border"
-        onFinish={onFinish}
+        onFinish={onSubmit}
         autoComplete="off"
       >
         <Form.Item label="Email" name="email" rules={EMAIL_RULES}>
@@ -63,10 +63,7 @@ const SignUp = () => {
             Submit
           </Button>
         </Form.Item>
-        <Link
-          to={AUTH_LINKS.LOGIN}
-          className="w-full inline-block text-center underline"
-        >
+        <Link to={AUTH_LINKS.LOGIN} className="w-full inline-block text-center underline">
           Already have an account? Login
         </Link>
       </Form>

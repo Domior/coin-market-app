@@ -15,7 +15,7 @@ const { Title } = Typography;
 const LogIn = () => {
   const navigate = useNavigate();
 
-  const onFinish = async values => {
+  const onSubmit = async values => {
     const { email, password } = values;
     try {
       const {
@@ -25,8 +25,8 @@ const LogIn = () => {
         password,
       });
 
-      toast.success(message);
       SessionStorageService.setItem(ACCESS_TOKEN_KEY, token);
+      toast.success(message);
       navigate(APP_LINKS.DASHBOARD);
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -45,7 +45,7 @@ const LogIn = () => {
           span: 16,
         }}
         className="mt-10 border"
-        onFinish={onFinish}
+        onFinish={onSubmit}
         autoComplete="off"
       >
         <Form.Item label="Email" name="email" rules={EMAIL_RULES}>
@@ -66,10 +66,7 @@ const LogIn = () => {
             Submit
           </Button>
         </Form.Item>
-        <Link
-          to={AUTH_LINKS.SIGNUP}
-          className="w-full inline-block text-center underline"
-        >
+        <Link to={AUTH_LINKS.SIGNUP} className="w-full inline-block text-center underline">
           Don't have an account? Sign up
         </Link>
       </Form>

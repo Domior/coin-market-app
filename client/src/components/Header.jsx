@@ -34,18 +34,12 @@ const Header = () => {
   };
 
   return (
-    <div className="px-8 py-4 flex items-center justify-center shadow">
+    <div className="px-8 py-4 w-full flex items-center justify-center shadow">
       <Title level={2} className="text-center !mb-0 mx-auto">
         Coin market app
       </Title>
       <Button onClick={toggleModal}>Log out</Button>
-      <Modal
-        title={<Title level={4}>Log out</Title>}
-        okText="Yes"
-        open={isModalOpen}
-        onOk={handleLogOut}
-        onCancel={toggleModal}
-      >
+      <Modal title={<Title level={4}>Log out</Title>} okText="Yes" open={isModalOpen} onOk={handleLogOut} onCancel={toggleModal}>
         <Text>Are you sure you want to log out?</Text>
       </Modal>
     </div>
