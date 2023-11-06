@@ -47,10 +47,6 @@ const Dashboard = () => {
     };
   }, [getCoinsList]);
 
-  const onChange = (pagination, filters, sorter, extra) => {
-    console.log('params', pagination, filters, sorter, extra);
-  };
-
   const columns = [
     {
       title: '#',
@@ -101,7 +97,6 @@ const Dashboard = () => {
         rowClassName="cursor-pointer"
         columns={columns}
         dataSource={coins}
-        onChange={onChange}
         onRow={record => ({
           onClick: () => handleRowClick(record),
         })}

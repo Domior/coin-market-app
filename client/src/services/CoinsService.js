@@ -9,4 +9,12 @@ export class CoinsService {
   static async getCoins(body) {
     return baseInstance.get(`/coins`, body);
   }
+
+  /**
+   * get coin details
+   * @param {string} id
+   */
+  static async getCoinDetails(id) {
+    return baseInstance.get(`/coins/${id}`);
+  }
 }
