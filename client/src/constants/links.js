@@ -5,4 +5,7 @@ export const AUTH_LINKS = {
 
 export const APP_LINKS = {
   DASHBOARD: '/dashboard',
+  COIN: '/coin',
+  COIN_DETAILS: '/coin/:id',
+  FAVORITES: '/favorites',
 };

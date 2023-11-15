@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+
 import { toast } from 'react-toastify';
 import { Table } from 'antd';
 
@@ -7,27 +8,17 @@ import Loader from '../components/Loader';
 import { CoinsService } from '../services/CoinsService';
 import { useDefaultTable } from '../hooks/useDefaultTable';
 
-const REQUEST_INTERVAL = 45000; // 45 seconds
-
-const Dashboard = () => {
+const Favorites = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isFavoriting, setIsFavoriting] = useState(false);
 
-  const [coins, setCoins] = useState([]);
+  const [favoriteCoins, setFavoriteCoins] = useState([]);
 
   const handleFavoriteToggle = useCallback(async ({ id, isFavorite }) => {
     setIsFavoriting(true);
     try {
       const { coinId } = await CoinsService.setFavorite({ coinId: id, isFavorite });
-
-      setCoins(prev => {
-        return prev.map(coin => {
-          if (coin.id === coinId) {
-            return { ...coin, isFavorite: !isFavorite };
-          }
-          return coin;
-        });
-      });
+      setFavoriteCoins(prev => prev.filter(item => item.id !== coinId));
     } catch (error) {
       toast.error(error);
     } finally {
@@ -37,12 +28,12 @@ const Dashboard = () => {
 
   const { columns, handleRowClick } = useDefaultTable({ handleFavoriteToggle, isFavoriting });
 
-  const getCoinsList = useCallback(async () => {
+  const getFavoriteCoinsList = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data } = await CoinsService.getCoins();
-
-      setCoins(data);
+      const favorites = data.filter(item => item.isFavorite === true);
+      setFavoriteCoins(favorites);
     } catch (error) {
       toast.error(error);
     } finally {
@@ -51,16 +42,8 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    getCoinsList();
-
-    const interval = setInterval(() => {
-      getCoinsList();
-    }, REQUEST_INTERVAL);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [getCoinsList]);
+    getFavoriteCoinsList();
+  }, [getFavoriteCoinsList]);
 
   if (isLoading) return <Loader />;
 
@@ -70,7 +53,7 @@ const Dashboard = () => {
         rowKey="id"
         rowClassName="cursor-pointer"
         columns={columns}
-        dataSource={coins}
+        dataSource={favoriteCoins}
         onRow={record => ({
           onClick: () => handleRowClick(record),
         })}
@@ -79,4 +62,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default Favorites;

@@ -8,6 +8,7 @@ require('dotenv').config();
 const UserModel = require('../models/Users');
 const handleError = require('../helpers/handleError');
 const auth = require('../auth');
+const STATUSES = require('../constants/statuses');
 
 router.post('/signup', async (req, res) => {
   const { email, password } = req.body;
@@ -15,12 +16,12 @@ router.post('/signup', async (req, res) => {
   try {
     const user = await UserModel.findOne({ email });
 
-    if (user) return handleError(res, 422, 'Already have an account');
+    if (user) return handleError(res, STATUSES.UNPROCESSABLE_CONTENT, 'Already have an account');
 
     await UserModel.create({ email, password });
-    res.status(201).json({ message: 'You successfully registered! Please log in' });
+    res.status(STATUSES.CREATED).json({ message: 'You successfully registered! Please log in' });
   } catch (error) {
-    handleError(res, 500, 'Internal server error');
+    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, 'Internal server error');
   }
 });
 
@@ -30,32 +31,31 @@ router.post('/login', async (req, res) => {
   try {
     const user = await UserModel.findOne({ email });
 
-    if (!user) return handleError(res, 400, 'No such user. Please register');
+    if (!user) return handleError(res, STATUSES.BAD_REQUEST, 'No such user. Please register');
 
-    if (user.password !== password)
-      return handleError(res, 400, 'Incorrect email or password');
+    if (user.password !== password) return handleError(res, STATUSES.BAD_REQUEST, 'Incorrect email or password');
 
     const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET_KEY, {
       expiresIn: '1d',
     });
 
-    res.status(201).json({
+    res.status(STATUSES.CREATED).json({
       message: 'Login Successful',
       email: user.email,
       token,
     });
   } catch (error) {
-    handleError(res, 500, 'Internal server error');
+    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, 'Internal server error');
   }
 });
 
 router.delete('/logout', auth, async (req, res) => {
   try {
-    res.status(200).json({
-      message: 'Logout Successful',
+    res.status(STATUSES.OK).json({
+      data: { message: 'Logout Successful' },
     });
   } catch (error) {
-    handleError(res, 500, 'Internal server error');
+    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, 'Internal server error');
   }
 });
 
