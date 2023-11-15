@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 
 const handleError = require('./helpers/handleError');
+const STATUSES = require('./constants/statuses');
 
 module.exports = async (request, response, next) => {
   try {
@@ -14,6 +15,6 @@ module.exports = async (request, response, next) => {
 
     next();
   } catch (error) {
-    handleError(response, 401, 'Invalid request');
+    handleError(response, STATUSES.UNAUTHORIZED, 'Invalid request');
   }
 };
