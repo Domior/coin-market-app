@@ -89,4 +89,16 @@ router.patch('/favorites/:coinId', auth, async (req, res) => {
   }
 });
 
+router.get('/coins/:id', auth, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const { data } = await axios.get(`${process.env.COINGECKO_URL}/coins/${id}`);
+    res.status(200).json({ data });
+  } catch (error) {
+    console.log(error);
+    handleError(res, 500, 'Internal server error');
+  }
+});
+
 module.exports = router;
