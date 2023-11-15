@@ -27,7 +27,6 @@ export const useDefaultTable = ({ handleFavoriteToggle, isFavoriting }) => {
                 if (isFavoriting) return;
                 handleFavoriteToggle({ id, isFavorite });
               }}
-              disabled={true}
             />
             <span className="ms-2">{market_cap_rank}</span>
           </div>
