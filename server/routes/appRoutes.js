@@ -14,6 +14,7 @@ const DEFAULT_PARAMS = {
   order: 'market_cap_desc',
   per_page: '100',
   page: '1',
+  days: 7,
 };
 
 router.get('/coins', auth, async (req, res) => {
@@ -89,15 +90,21 @@ router.patch('/favorites/:coinId', auth, async (req, res) => {
   }
 });
 
-router.get('/coins/:id', auth, async (req, res) => {
+router.get('/chart/:id', auth, async (req, res) => {
   const { id } = req.params;
+  const { vs_currency = DEFAULT_PARAMS.vs_currency, days = DEFAULT_PARAMS.days } = req.query;
+
+  const params = {
+    vs_currency,
+    days,
+  };
 
   try {
-    const { data } = await axios.get(`${process.env.COINGECKO_URL}/coins/${id}`);
-    res.status(200).json({ data });
+    const { data } = await axios.get(`${process.env.COINGECKO_URL}/coins/${id}/market_chart`, { params });
+    res.status(STATUSES.OK).json({ data });
   } catch (error) {
     console.log(error);
-    handleError(res, 500, 'Internal server error');
+    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, 'Internal server error');
   }
 });
 

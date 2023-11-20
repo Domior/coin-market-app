@@ -6,6 +6,7 @@ import { Button, Avatar, Typography, Badge, Col, Row, Statistic, Popover, Descri
 import { InfoCircleOutlined } from '@ant-design/icons';
 
 import Loader from '../components/Loader';
+import Chart from '../components/Chart';
 
 import { CoinsService } from '../services/CoinsService';
 import { useGoBack } from '../hooks/useGoBack';
@@ -164,6 +165,8 @@ const CoinDetails = () => {
           />
         </Col>
       </Row>
+
+      <Chart />
     </div>
   );
 };

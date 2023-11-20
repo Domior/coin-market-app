@@ -3,11 +3,11 @@ import { baseInstance } from './index';
 export class CoinsService {
   /**
    * get coins list
-   * @param {Object} body
-   * @param {string} body.vs_currency
+   * @param {Object} params
+   * @param {string} params.vs_currency
    */
-  static async getCoins(body) {
-    return baseInstance.get(`/coins`, body);
+  static async getCoins(params) {
+    return baseInstance.get(`/coins`, { params });
   }
 
   /**
@@ -25,5 +25,16 @@ export class CoinsService {
    */
   static async setFavorite({ coinId, isFavorite }) {
     return baseInstance.patch(`/favorites/${coinId}`, { isFavorite });
+  }
+
+  /**
+   * get coin chart
+   * @param {string} id
+   * @param {Object} params
+   * @param {string} params.vs_currency
+   * @param {string} params.days
+   */
+  static async getCoinChart(id, params) {
+    return baseInstance.get(`/chart/${id}`, { params });
   }
 }
