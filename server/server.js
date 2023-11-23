@@ -41,7 +41,6 @@ const handleChartData = async (socket, data) => {
 
   try {
     const { data: chartData } = await axios.get(`${process.env.COINGECKO_URL}/coins/${id}/market_chart`, { params });
-    console.log(chartData.length);
     socket.emit(SOCKET_EVENTS.RECEIVE_CHART_DATA, chartData);
   } catch (error) {
     socket.emit(SOCKET_EVENTS.RECEIVE_CHART_DATA_ERROR, 'Something went wrong. Try again later');
