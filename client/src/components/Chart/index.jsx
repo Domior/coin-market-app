@@ -5,38 +5,42 @@ import { Segmented } from 'antd';
 
 import LineChart from './LineChart';
 import BarChart from './BarChart';
-import Loader from '../Loader';
 
-import { CoinsService } from '../../services/CoinsService';
-import { CHART_TYPES, CHART_TYPE_NAMES, PERIODS_ARRAY, PERIODS_IN_DAYS } from '../../constants/chart';
+import { CHART_TYPES, CHART_TYPE_NAMES, PERIODS_ARRAY, PERIODS_IN_DAYS, REQUEST_NEW_DATA_DELAY } from '../../constants/chart';
+import { socket } from '../../services/socket-api';
+import { SOCKET_EVENTS } from '../../constants/socket';
 
 const Chart = () => {
   const { id } = useParams();
 
-  const [isLoading, setIsLoading] = useState(false);
   const [coinChartData, setCoinChartData] = useState(null);
   const [chartType, setChartType] = useState(CHART_TYPES[0].label);
   const [period, setPeriod] = useState(PERIODS_ARRAY[0]);
 
-  const getCoinChart = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const { data } = await CoinsService.getCoinChart(id, { days: PERIODS_IN_DAYS[period] });
-      setCoinChartData(data);
-    } catch (error) {
-      toast.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [period]);
+  const requestChartData = useCallback(() => {
+    socket.emit(SOCKET_EVENTS.GET_CHART_DATA, { id, days: PERIODS_IN_DAYS[period] });
+  }, [id, period]);
 
   useEffect(() => {
-    getCoinChart();
-  }, [getCoinChart]);
+    requestChartData();
 
-  console.log(chartType);
+    const interval = setInterval(requestChartData, REQUEST_NEW_DATA_DELAY);
 
-  if (isLoading || !coinChartData) return <Loader />;
+    return () => {
+      clearInterval(interval);
+      return socket.disconnect;
+    };
+  }, [requestChartData]);
+
+  useEffect(() => {
+    socket.on(SOCKET_EVENTS.RECEIVE_CHART_DATA, data => setCoinChartData(data));
+  }, []);
+
+  useEffect(() => {
+    socket.on(SOCKET_EVENTS.RECEIVE_CHART_DATA_ERROR, message => toast.error(message));
+  }, []);
+
+  if (!coinChartData) return null;
 
   return (
     <div className="m-auto pt-8 max-w-7xl">

@@ -1,5 +1,7 @@
 import { LineChartOutlined, BarChartOutlined } from '@ant-design/icons';
 
+export const REQUEST_NEW_DATA_DELAY = 10000; // 10 seconds
+
 export const CHART_TYPE_NAMES = {
   LINE: 'Line',
   BAR: 'Bar',
