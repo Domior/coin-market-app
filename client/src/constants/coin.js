@@ -1,5 +1,5 @@
 export const COIN_DETAILS = {
-  id: '',
+  id: null,
   symbol: '',
   name: '',
   description: {
