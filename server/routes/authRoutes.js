@@ -18,7 +18,7 @@ router.post('/signup', async (req, res) => {
 
     if (user) return handleError(res, STATUSES.UNPROCESSABLE_CONTENT, 'Already have an account');
 
-    await UserModel.create({ email, password });
+    await UserModel.create({ email, password, metamaskAddress: null });
     res.status(STATUSES.CREATED).json({ message: 'You successfully registered! Please log in' });
   } catch (error) {
     handleError(res, STATUSES.INTERNAL_SERVER_ERROR, 'Internal server error');
@@ -39,9 +39,31 @@ router.post('/login', async (req, res) => {
       expiresIn: '1d',
     });
 
-    res.status(STATUSES.CREATED).json({
+    res.status(STATUSES.OK).json({
       message: 'Login Successful',
       email: user.email,
+      token,
+    });
+  } catch (error) {
+    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, 'Internal server error');
+  }
+});
+
+router.post('/login-metamask', async (req, res) => {
+  const { metamaskAddress } = req.body;
+
+  try {
+    const user = await UserModel.findOne({ metamaskAddress });
+
+    if (!user) await UserModel.create({ metamaskAddress, password: null, email: null });
+
+    const token = jwt.sign({ metamaskAddress }, process.env.JWT_SECRET_KEY, {
+      expiresIn: '1d',
+    });
+
+    res.status(STATUSES.OK).json({
+      message: 'Login Successful',
+      metamaskAddress,
       token,
     });
   } catch (error) {

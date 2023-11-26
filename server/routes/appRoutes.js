@@ -12,7 +12,7 @@ const REQUEST_DEFAULT_PARAMS = require('../constants/params');
 
 router.get('/coins', auth, async (req, res) => {
   const { vs_currency = REQUEST_DEFAULT_PARAMS.vs_currency } = req.body;
-  const { email } = req.user;
+  const { email, metamaskAddress } = req.user;
 
   const params = {
     vs_currency,
@@ -24,10 +24,10 @@ router.get('/coins', auth, async (req, res) => {
   try {
     const { data } = await axios.get(`${process.env.COINGECKO_URL}/coins/markets`, { params });
 
-    const item = await FavoritesModel.findOne({ userEmail: email });
+    const item = await FavoritesModel.findOne(email ? { userEmail: email } : { userMetamaskAddress: metamaskAddress });
 
     if (!item) {
-      await FavoritesModel.create({ userEmail: email, favorites: [] });
+      await FavoritesModel.create(email ? { userEmail: email, favorites: [] } : { userMetamaskAddress: metamaskAddress, favorites: [] });
     } else {
       const newData = data.map(coin => {
         return {
@@ -59,10 +59,10 @@ router.get('/coins/:id', auth, async (req, res) => {
 
 router.patch('/favorites/:coinId', auth, async (req, res) => {
   const { coinId } = req.params;
-  const { email } = req.user;
+  const { email, metamaskAddress } = req.user;
 
   try {
-    const item = await FavoritesModel.findOne({ userEmail: email });
+    const item = await FavoritesModel.findOne(email ? { userEmail: email } : { userMetamaskAddress: metamaskAddress });
 
     if (item) {
       if (!item.favorites.includes(coinId)) {
@@ -73,7 +73,7 @@ router.patch('/favorites/:coinId', auth, async (req, res) => {
         await item.save();
       }
     } else {
-      await FavoritesModel.create({ userEmail: email, favorites: [coinId] });
+      await FavoritesModel.create(email ? { userEmail: email, favorites: [coinId] } : { userMetamaskAddress: metamaskAddress, favorites: [coinId] });
     }
 
     res.status(STATUSES.OK).json({ coinId });

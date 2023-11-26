@@ -22,6 +22,15 @@ export class AuthService {
   }
 
   /**
+   * login metamask
+   * @param {Object} body
+   * @param {string} body.metamaskAddress
+   */
+  static async logInMetamask(body) {
+    return commonInstance.post(`/login-metamask`, body);
+  }
+
+  /**
    * logout
    */
   static async logOut() {
