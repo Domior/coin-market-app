@@ -1,3 +1,4 @@
 export const STATUSES = {
   UNAUTHORIZED: 401,
+  METAMASK_ERROR: -32002,
 };

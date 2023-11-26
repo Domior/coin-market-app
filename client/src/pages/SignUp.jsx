@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button, Card, Form, Input, Typography } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+
+import MetamaskButton from '../components/MetamaskButton';
 
 import { AuthService } from '../services/AuthService';
 import { AUTH_LINKS } from '../constants/links';
@@ -13,9 +15,12 @@ const { Title } = Typography;
 const SignUp = () => {
   const navigate = useNavigate();
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const onSubmit = async values => {
     const { email, password } = values;
     try {
+      setIsLoading(true);
       const {
         data: { message },
       } = await AuthService.signUp({
@@ -27,6 +32,8 @@ const SignUp = () => {
       navigate(AUTH_LINKS.LOGIN);
     } catch (error) {
       toast.error(getErrorMessage(error));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -59,7 +66,7 @@ const SignUp = () => {
             span: 16,
           }}
         >
-          <Button type="primary" htmlType="submit" className="w-[120px]">
+          <Button type="primary" htmlType="submit" className="w-[120px]" loading={isLoading}>
             Submit
           </Button>
         </Form.Item>
@@ -67,6 +74,8 @@ const SignUp = () => {
           Already have an account? Login
         </Link>
       </Form>
+
+      <MetamaskButton />
     </Card>
   );
 };
