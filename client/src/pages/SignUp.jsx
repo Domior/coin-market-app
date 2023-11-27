@@ -53,11 +53,11 @@ const SignUp = () => {
         autoComplete="off"
       >
         <Form.Item label="Email" name="email" rules={EMAIL_RULES}>
-          <Input />
+          <Input placeholder="Enter email" />
         </Form.Item>
 
         <Form.Item label="Password" name="password" rules={PASSWORD_RULES}>
-          <Input.Password />
+          <Input.Password placeholder="Enter password" />
         </Form.Item>
 
         <Form.Item

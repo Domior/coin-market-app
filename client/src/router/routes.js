@@ -1,5 +1,7 @@
 import SignUp from '../pages/SignUp';
 import LogIn from '../pages/LogIn';
+import ForgotPassword from '../pages/ForgotPassword';
+import ResetPassword from '../pages/ResetPassword';
 import Dashboard from '../pages/Dashboard';
 import CoinDetails from '../pages/CoinDetails';
 import Favorites from '../pages/Favorites';
@@ -14,6 +16,14 @@ export const PUBLIC_ROUTES = [
   {
     path: AUTH_LINKS.LOGIN,
     component: <LogIn />,
+  },
+  {
+    path: AUTH_LINKS.FORGOT_PASSWORD,
+    component: <ForgotPassword />,
+  },
+  {
+    path: AUTH_LINKS.RESET_PASSWORD,
+    component: <ResetPassword />,
   },
 ];
 
