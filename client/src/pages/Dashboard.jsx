@@ -6,6 +6,7 @@ import Loader from '../components/Loader';
 
 import { CoinsService } from '../services/CoinsService';
 import { useDefaultTable } from '../hooks/useDefaultTable';
+import { getErrorMessage } from '../helpers/getErrorMessage';
 
 const REQUEST_INTERVAL = 45000; // 45 seconds
 
@@ -29,7 +30,7 @@ const Dashboard = () => {
         });
       });
     } catch (error) {
-      toast.error(error);
+      toast.error(getErrorMessage(error));
     } finally {
       setIsFavoriting(false);
     }
@@ -44,7 +45,7 @@ const Dashboard = () => {
 
       setCoins(data);
     } catch (error) {
-      toast.error(error);
+      toast.error(getErrorMessage(error));
     } finally {
       setIsLoading(false);
     }

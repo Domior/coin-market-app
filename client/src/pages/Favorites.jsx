@@ -7,6 +7,7 @@ import Loader from '../components/Loader';
 
 import { CoinsService } from '../services/CoinsService';
 import { useDefaultTable } from '../hooks/useDefaultTable';
+import { getErrorMessage } from '../helpers/getErrorMessage';
 
 const Favorites = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -20,7 +21,7 @@ const Favorites = () => {
       const { coinId } = await CoinsService.setFavorite({ coinId: id, isFavorite });
       setFavoriteCoins(prev => prev.filter(item => item.id !== coinId));
     } catch (error) {
-      toast.error(error);
+      toast.error(getErrorMessage(error));
     } finally {
       setIsFavoriting(false);
     }
@@ -35,7 +36,7 @@ const Favorites = () => {
       const favorites = data.filter(item => item.isFavorite === true);
       setFavoriteCoins(favorites);
     } catch (error) {
-      toast.error(error);
+      toast.error(getErrorMessage(error));
     } finally {
       setIsLoading(false);
     }

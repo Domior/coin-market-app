@@ -41,6 +41,8 @@ router.get('/coins', auth, async (req, res) => {
     return res.status(STATUSES.OK).json({ data });
   } catch (error) {
     console.log(error);
+    if (error.response.status === STATUSES.TOO_MANY_REQUESTS)
+      return handleError(res, STATUSES.TOO_MANY_REQUESTS, 'Too many requests. Please try again later');
     handleError(res, STATUSES.INTERNAL_SERVER_ERROR, 'Internal server error');
   }
 });
@@ -53,6 +55,8 @@ router.get('/coins/:id', auth, async (req, res) => {
     res.status(STATUSES.OK).json({ data });
   } catch (error) {
     console.log(error);
+    if (error.response.status === STATUSES.TOO_MANY_REQUESTS)
+      return handleError(res, STATUSES.TOO_MANY_REQUESTS, 'Too many requests. Please try again later');
     handleError(res, STATUSES.INTERNAL_SERVER_ERROR, 'Internal server error');
   }
 });
