@@ -3,37 +3,31 @@ import { Button, Card, Form, Input, Typography } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-import MetamaskButton from '../components/MetamaskButton';
-
 import { AuthService } from '../services/AuthService';
-import { SessionStorageService } from '../services/SessionStorageService';
-import { AUTH_LINKS, APP_LINKS } from '../constants/links';
-import { ACCESS_TOKEN_KEY } from '../constants/storage';
-import { EMAIL_RULES, PASSWORD_RULES } from '../constants/validations';
+import { AUTH_LINKS } from '../constants/links';
+import { EMAIL_RULES } from '../constants/validations';
 import { getErrorMessage } from '../helpers/getErrorMessage';
 
 const { Title } = Typography;
 
-const LogIn = () => {
+const ForgotPassword = () => {
   const navigate = useNavigate();
 
   const [isLoading, setIsLoading] = useState(false);
 
   const onSubmit = async values => {
-    const { email, password } = values;
+    const { email } = values;
     try {
       setIsLoading(true);
 
       const {
-        data: { message, token },
-      } = await AuthService.logIn({
+        data: { message },
+      } = await AuthService.forgotPassword({
         email,
-        password,
       });
 
-      SessionStorageService.setItem(ACCESS_TOKEN_KEY, token);
       toast.success(message);
-      navigate(APP_LINKS.DASHBOARD);
+      navigate(AUTH_LINKS.LOGIN);
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -43,11 +37,11 @@ const LogIn = () => {
 
   return (
     <Card style={{ width: 500 }}>
-      <Title className="text-center">Log in</Title>
+      <Title className="text-center">Forgot password</Title>
       <Form
-        name="login"
+        name="forgot-password"
         labelCol={{
-          span: 8,
+          span: 5,
         }}
         wrapperCol={{
           span: 16,
@@ -60,13 +54,6 @@ const LogIn = () => {
           <Input placeholder="Enter email" />
         </Form.Item>
 
-        <Form.Item label="Password" name="password" rules={PASSWORD_RULES} className="mb-1">
-          <Input.Password placeholder="Enter password" />
-        </Form.Item>
-        <Link to={AUTH_LINKS.FORGOT_PASSWORD} className="mb-5 w-full inline-block text-right underline">
-          Forgot password?
-        </Link>
-
         <Form.Item
           wrapperCol={{
             offset: 9,
@@ -77,14 +64,12 @@ const LogIn = () => {
             Submit
           </Button>
         </Form.Item>
-        <Link to={AUTH_LINKS.SIGNUP} className="w-full inline-block text-center underline">
-          Don't have an account? Sign up
+        <Link to={AUTH_LINKS.LOGIN} className="w-full inline-block text-center underline">
+          Back to login
         </Link>
       </Form>
-
-      <MetamaskButton />
     </Card>
   );
 };
 
-export default LogIn;
+export default ForgotPassword;

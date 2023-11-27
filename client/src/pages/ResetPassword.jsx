@@ -1,39 +1,41 @@
 import React, { useState } from 'react';
 import { Button, Card, Form, Input, Typography } from 'antd';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-import MetamaskButton from '../components/MetamaskButton';
-
 import { AuthService } from '../services/AuthService';
-import { SessionStorageService } from '../services/SessionStorageService';
-import { AUTH_LINKS, APP_LINKS } from '../constants/links';
-import { ACCESS_TOKEN_KEY } from '../constants/storage';
-import { EMAIL_RULES, PASSWORD_RULES } from '../constants/validations';
+import { AUTH_LINKS } from '../constants/links';
+import { PASSWORD_RULES } from '../constants/validations';
 import { getErrorMessage } from '../helpers/getErrorMessage';
+import { useQuery } from '../hooks/useQuery';
+import { TOKEN_QUERY_KEY } from '../constants/query';
 
 const { Title } = Typography;
 
-const LogIn = () => {
+const ResetPassword = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+
+  const query = useQuery();
+  const token = query.get(TOKEN_QUERY_KEY);
 
   const [isLoading, setIsLoading] = useState(false);
 
   const onSubmit = async values => {
-    const { email, password } = values;
+    const { password } = values;
     try {
       setIsLoading(true);
 
       const {
-        data: { message, token },
-      } = await AuthService.logIn({
-        email,
+        data: { message },
+      } = await AuthService.resetPassword({
+        id,
+        token,
         password,
       });
 
-      SessionStorageService.setItem(ACCESS_TOKEN_KEY, token);
       toast.success(message);
-      navigate(APP_LINKS.DASHBOARD);
+      navigate(AUTH_LINKS.LOGIN);
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -43,11 +45,11 @@ const LogIn = () => {
 
   return (
     <Card style={{ width: 500 }}>
-      <Title className="text-center">Log in</Title>
+      <Title className="text-center">Reset password</Title>
       <Form
-        name="login"
+        name="reset-password"
         labelCol={{
-          span: 8,
+          span: 7,
         }}
         wrapperCol={{
           span: 16,
@@ -56,16 +58,9 @@ const LogIn = () => {
         onFinish={onSubmit}
         autoComplete="off"
       >
-        <Form.Item label="Email" name="email" rules={EMAIL_RULES}>
-          <Input placeholder="Enter email" />
-        </Form.Item>
-
-        <Form.Item label="Password" name="password" rules={PASSWORD_RULES} className="mb-1">
+        <Form.Item label="New password" name="password" rules={PASSWORD_RULES}>
           <Input.Password placeholder="Enter password" />
         </Form.Item>
-        <Link to={AUTH_LINKS.FORGOT_PASSWORD} className="mb-5 w-full inline-block text-right underline">
-          Forgot password?
-        </Link>
 
         <Form.Item
           wrapperCol={{
@@ -77,14 +72,12 @@ const LogIn = () => {
             Submit
           </Button>
         </Form.Item>
-        <Link to={AUTH_LINKS.SIGNUP} className="w-full inline-block text-center underline">
-          Don't have an account? Sign up
+        <Link to={AUTH_LINKS.LOGIN} className="w-full inline-block text-center underline">
+          Back to login
         </Link>
       </Form>
-
-      <MetamaskButton />
     </Card>
   );
 };
 
-export default LogIn;
+export default ResetPassword;

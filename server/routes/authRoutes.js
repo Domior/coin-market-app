@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-
+const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
 
 require('dotenv').config();
@@ -69,6 +69,58 @@ router.post('/login-metamask', async (req, res) => {
   } catch (error) {
     handleError(res, STATUSES.INTERNAL_SERVER_ERROR, 'Internal server error');
   }
+});
+
+router.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await UserModel.findOne({ email });
+
+    if (!user) return handleError(res, STATUSES.UNPROCESSABLE_CONTENT, 'No such user. Please register');
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET_KEY, {
+      expiresIn: '1d',
+    });
+
+    const encodedToken = encodeURIComponent(token);
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.NODEMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASSWORD,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.NODEMAILER_EMAIL,
+      to: email,
+      subject: 'Reset password',
+      text: `Follow link to reset password: ${process.env.FRONT_END_BASE_URL}/reset-password/${user._id}?token=${encodedToken}`,
+    };
+
+    transporter.sendMail(mailOptions, function (error, info) {
+      if (error) {
+        console.log(error);
+      } else {
+        res.status(STATUSES.OK).json({ message: 'Reset password link was successfully sent to your email' });
+      }
+    });
+  } catch (error) {
+    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, 'Internal server error');
+  }
+});
+
+router.post('/reset-password', async (req, res) => {
+  const { id, token, password } = req.body;
+
+  jwt.verify(token, process.env.JWT_SECRET_KEY, (error, decoded) => {
+    if (error) return res.status(STATUSES.BAD_REQUEST).json({ message: 'Token is invalid' });
+    UserModel.findByIdAndUpdate({ _id: id }, { password }).then(() =>
+      res.status(STATUSES.OK).json({ message: 'Your password was successfully reset. Please log in' }),
+    );
+  });
 });
 
 router.delete('/logout', auth, async (req, res) => {
