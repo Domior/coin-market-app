@@ -7,7 +7,7 @@ import LineChart from './LineChart';
 import BarChart from './BarChart';
 
 import { CHART_TYPES, CHART_TYPE_NAMES, PERIODS_ARRAY, PERIODS_IN_DAYS, REQUEST_NEW_DATA_DELAY } from '../../constants/chart';
-import { socket } from '../../services/socket-api';
+import { SocketService } from '../../services/SocketService';
 import { SOCKET_EVENTS } from '../../constants/socket';
 
 const Chart = () => {
@@ -18,7 +18,7 @@ const Chart = () => {
   const [period, setPeriod] = useState(PERIODS_ARRAY[0]);
 
   const requestChartData = useCallback(() => {
-    socket.emit(SOCKET_EVENTS.GET_CHART_DATA, { id, days: PERIODS_IN_DAYS[period] });
+    SocketService.emit(SOCKET_EVENTS.GET_CHART_DATA, { id, days: PERIODS_IN_DAYS[period] });
   }, [id, period]);
 
   useEffect(() => {
@@ -28,16 +28,16 @@ const Chart = () => {
 
     return () => {
       clearInterval(interval);
-      return socket.disconnect;
+      SocketService.disconnect();
     };
   }, [requestChartData]);
 
   useEffect(() => {
-    socket.on(SOCKET_EVENTS.RECEIVE_CHART_DATA, data => setCoinChartData(data));
+    SocketService.on(SOCKET_EVENTS.RECEIVE_CHART_DATA, data => setCoinChartData(data));
   }, []);
 
   useEffect(() => {
-    socket.on(SOCKET_EVENTS.RECEIVE_CHART_DATA_ERROR, message => toast.error(message));
+    SocketService.on(SOCKET_EVENTS.RECEIVE_CHART_DATA_ERROR, message => toast.error(message));
   }, []);
 
   if (!coinChartData) return null;
