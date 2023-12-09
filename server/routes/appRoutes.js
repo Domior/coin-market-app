@@ -2,13 +2,12 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 
-require('dotenv').config();
-
 const auth = require('../auth');
 const handleError = require('../helpers/handleError');
 const FavoritesModel = require('../models/Favorites');
 const STATUSES = require('../constants/statuses');
 const REQUEST_DEFAULT_PARAMS = require('../constants/params');
+const { ERRORS } = require('../constants/text');
 
 router.get('/coins', auth, async (req, res) => {
   const { vs_currency = REQUEST_DEFAULT_PARAMS.vs_currency } = req.body;
@@ -41,9 +40,8 @@ router.get('/coins', auth, async (req, res) => {
     return res.status(STATUSES.OK).json({ data });
   } catch (error) {
     console.log(error);
-    if (error.response.status === STATUSES.TOO_MANY_REQUESTS)
-      return handleError(res, STATUSES.TOO_MANY_REQUESTS, 'Too many requests. Please try again later');
-    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, 'Internal server error');
+    if (error.response.status === STATUSES.TOO_MANY_REQUESTS) return handleError(res, STATUSES.TOO_MANY_REQUESTS, ERRORS.TOO_MANY_REQUESTS);
+    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);
   }
 });
 
@@ -55,9 +53,8 @@ router.get('/coins/:id', auth, async (req, res) => {
     res.status(STATUSES.OK).json({ data });
   } catch (error) {
     console.log(error);
-    if (error.response.status === STATUSES.TOO_MANY_REQUESTS)
-      return handleError(res, STATUSES.TOO_MANY_REQUESTS, 'Too many requests. Please try again later');
-    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, 'Internal server error');
+    if (error.response.status === STATUSES.TOO_MANY_REQUESTS) return handleError(res, STATUSES.TOO_MANY_REQUESTS, ERRORS.TOO_MANY_REQUESTS);
+    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);
   }
 });
 
@@ -83,7 +80,7 @@ router.patch('/favorites/:coinId', auth, async (req, res) => {
     res.status(STATUSES.OK).json({ coinId });
   } catch (error) {
     console.log(error);
-    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, 'Internal server error');
+    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);
   }
 });
 
@@ -101,7 +98,7 @@ router.get('/chart/:id', auth, async (req, res) => {
     res.status(STATUSES.OK).json({ data });
   } catch (error) {
     console.log(error);
-    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, 'Internal server error');
+    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);
   }
 });
 

@@ -12,6 +12,7 @@ const appRoutes = require('./routes/appRoutes');
 const SOCKET_EVENTS = require('./constants/socket');
 const REQUEST_DEFAULT_PARAMS = require('./constants/params');
 const STATUSES = require('./constants/statuses');
+const { ERRORS } = require('./constants/text');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -48,7 +49,7 @@ const handleChartData = async (socket, data) => {
 
     socket.emit(
       SOCKET_EVENTS.RECEIVE_CHART_DATA_ERROR,
-      error.response.status === STATUSES.TOO_MANY_REQUESTS ? 'Too many requests. Please try again later' : 'Something went wrong. Try again later',
+      error.response.status === STATUSES.TOO_MANY_REQUESTS ? ERRORS.TOO_MANY_REQUESTS : ERRORS.SOMETHING_WENT_WRONG,
     );
   }
 };
