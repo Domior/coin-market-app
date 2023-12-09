@@ -24,9 +24,7 @@ const LogIn = () => {
     try {
       setIsLoading(true);
 
-      const {
-        data: { message, token },
-      } = await AuthService.logIn({
+      const { token, message } = await AuthService.logIn({
         email,
         password,
       });

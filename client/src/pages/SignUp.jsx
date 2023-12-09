@@ -21,9 +21,7 @@ const SignUp = () => {
     const { email, password } = values;
     try {
       setIsLoading(true);
-      const {
-        data: { message },
-      } = await AuthService.signUp({
+      const { message } = await AuthService.signUp({
         email,
         password,
       });
