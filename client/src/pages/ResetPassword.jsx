@@ -26,9 +26,7 @@ const ResetPassword = () => {
     try {
       setIsLoading(true);
 
-      const {
-        data: { message },
-      } = await AuthService.resetPassword({
+      const { message } = await AuthService.resetPassword({
         id,
         token,
         password,

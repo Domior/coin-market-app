@@ -48,3 +48,10 @@ export const commonInstance = axios.create({
     Accept: 'application/json',
   },
 });
+
+commonInstance.interceptors.response.use(
+  response => response.data.data,
+  error => {
+    return Promise.reject(error);
+  },
+);

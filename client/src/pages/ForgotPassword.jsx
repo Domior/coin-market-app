@@ -20,9 +20,7 @@ const ForgotPassword = () => {
     try {
       setIsLoading(true);
 
-      const {
-        data: { message },
-      } = await AuthService.forgotPassword({
+      const { message } = await AuthService.forgotPassword({
         email,
       });
 

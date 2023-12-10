@@ -25,9 +25,7 @@ export const useMetamask = () => {
         method: 'eth_requestAccounts',
       });
 
-      const {
-        data: { message, token },
-      } = await AuthService.logInMetamask({
+      const { message, token } = await AuthService.logInMetamask({
         metamaskAddress: accounts[0],
       });
       SessionStorageService.setItem(ACCESS_TOKEN_KEY, token);

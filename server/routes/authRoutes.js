@@ -1,27 +1,42 @@
 const express = require('express');
+const bcrypt = require('bcrypt');
 const router = express.Router();
-const nodemailer = require('nodemailer');
-const jwt = require('jsonwebtoken');
-
-require('dotenv').config();
 
 const UserModel = require('../models/Users');
 const handleError = require('../helpers/handleError');
+const sendResponse = require('../helpers/sendResponse');
 const auth = require('../auth');
 const STATUSES = require('../constants/statuses');
+const { ERRORS, SUCCESS } = require('../constants/text');
+const JWTService = require('../services/JWTService');
+const NodemailerService = require('../services/NodemailerService');
+const DBService = require('../services/DBService');
+const validateUserLoginData = require('../helpers/validateUserLoginData');
+const validateEmail = require('../helpers/validateEmail');
+const validatePassword = require('../helpers/validatePassword');
+
+const saltRounds = 10;
+
+const userModelService = new DBService(UserModel);
 
 router.post('/signup', async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = await UserModel.findOne({ email });
+    const validationResult = await validateUserLoginData(res, email, password);
 
-    if (user) return handleError(res, STATUSES.UNPROCESSABLE_CONTENT, 'Already have an account');
+    if (!validationResult) return;
 
-    await UserModel.create({ email, password, metamaskAddress: null });
-    res.status(STATUSES.CREATED).json({ message: 'You successfully registered! Please log in' });
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    const user = await userModelService.findUser(email);
+
+    if (user) return handleError(res, STATUSES.UNPROCESSABLE_CONTENT, ERRORS.ALREADY_HAVE_ACCOUNT);
+
+    await userModelService.createUser({ email, password: hashedPassword, metamaskAddress: null });
+    sendResponse(res, STATUSES.CREATED, { message: SUCCESS.REGISTER_SUCCESSFUL });
   } catch (error) {
-    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, 'Internal server error');
+    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);
   }
 });
 
@@ -29,23 +44,22 @@ router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = await UserModel.findOne({ email });
+    const user = await userModelService.findUser(email);
 
-    if (!user) return handleError(res, STATUSES.BAD_REQUEST, 'No such user. Please register');
+    if (!user) return handleError(res, STATUSES.BAD_REQUEST, ERRORS.NO_SUCH_USER);
 
-    if (user.password !== password) return handleError(res, STATUSES.BAD_REQUEST, 'Incorrect email or password');
+    const result = await bcrypt.compare(password, user.password);
 
-    const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET_KEY, {
-      expiresIn: '1d',
-    });
+    if (!result) return handleError(res, STATUSES.BAD_REQUEST, ERRORS.INCORRECT_EMAIL_OR_PASSWORD);
 
-    res.status(STATUSES.OK).json({
-      message: 'Login Successful',
+    const token = JWTService.generateToken({ email: user.email });
+    sendResponse(res, STATUSES.OK, {
+      message: SUCCESS.LOGIN_SUCCESSFUL,
       email: user.email,
       token,
     });
   } catch (error) {
-    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, 'Internal server error');
+    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);
   }
 });
 
@@ -53,21 +67,19 @@ router.post('/login-metamask', async (req, res) => {
   const { metamaskAddress } = req.body;
 
   try {
-    const user = await UserModel.findOne({ metamaskAddress });
+    const user = await userModelService.findUser(metamaskAddress, false);
 
-    if (!user) await UserModel.create({ metamaskAddress, password: null, email: null });
+    if (!user) await userModelService.createUser({ metamaskAddress, password: null, email: null });
 
-    const token = jwt.sign({ metamaskAddress }, process.env.JWT_SECRET_KEY, {
-      expiresIn: '1d',
-    });
+    const token = JWTService.generateToken({ metamaskAddress });
 
-    res.status(STATUSES.OK).json({
-      message: 'Login Successful',
+    sendResponse(res, STATUSES.OK, {
+      message: SUCCESS.LOGIN_SUCCESSFUL,
       metamaskAddress,
       token,
     });
   } catch (error) {
-    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, 'Internal server error');
+    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);
   }
 });
 
@@ -75,61 +87,56 @@ router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
 
   try {
-    const user = await UserModel.findOne({ email });
+    const validationResult = await validateEmail(res, email);
 
-    if (!user) return handleError(res, STATUSES.UNPROCESSABLE_CONTENT, 'No such user. Please register');
+    if (!validationResult) return;
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET_KEY, {
-      expiresIn: '1d',
-    });
+    const user = await userModelService.findUser(email);
+
+    if (!user) return handleError(res, STATUSES.UNPROCESSABLE_CONTENT, ERRORS.NO_SUCH_USER);
+
+    const token = JWTService.generateToken({ id: user._id });
 
     const encodedToken = encodeURIComponent(token);
 
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.NODEMAILER_EMAIL,
-        pass: process.env.NODEMAILER_PASSWORD,
-      },
-    });
-
-    const mailOptions = {
-      from: process.env.NODEMAILER_EMAIL,
+    NodemailerService.sendMailViaGmail(res, {
       to: email,
       subject: 'Reset password',
       text: `Follow link to reset password: ${process.env.FRONT_END_BASE_URL}/reset-password/${user._id}?token=${encodedToken}`,
-    };
-
-    transporter.sendMail(mailOptions, function (error, info) {
-      if (error) {
-        console.log(error);
-      } else {
-        res.status(STATUSES.OK).json({ message: 'Reset password link was successfully sent to your email' });
-      }
     });
   } catch (error) {
-    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, 'Internal server error');
+    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);
   }
 });
 
 router.post('/reset-password', async (req, res) => {
   const { id, token, password } = req.body;
 
-  jwt.verify(token, process.env.JWT_SECRET_KEY, (error, decoded) => {
-    if (error) return res.status(STATUSES.BAD_REQUEST).json({ message: 'Token is invalid' });
-    UserModel.findByIdAndUpdate({ _id: id }, { password }).then(() =>
-      res.status(STATUSES.OK).json({ message: 'Your password was successfully reset. Please log in' }),
-    );
-  });
+  const verificationResult = JWTService.verifyToken(token);
+
+  const validationResult = await validatePassword(res, password);
+
+  if (!validationResult) return;
+
+  const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+  if (verificationResult.valid) {
+    try {
+      await userModelService.updateUserPasswordById({ _id: id }, hashedPassword);
+      sendResponse(res, STATUSES.OK, { message: SUCCESS.PASSWORD_WAS_RESET });
+    } catch (error) {
+      handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);
+    }
+  } else {
+    handleError(res, STATUSES.BAD_REQUEST, ERRORS.TOKEN_INVALID);
+  }
 });
 
 router.delete('/logout', auth, async (req, res) => {
   try {
-    res.status(STATUSES.OK).json({
-      data: { message: 'Logout Successful' },
-    });
+    sendResponse(res, STATUSES.OK, { message: SUCCESS.LOGOUT_SUCCESSFUL });
   } catch (error) {
-    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, 'Internal server error');
+    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);
   }
 });
 

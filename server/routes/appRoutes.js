@@ -2,13 +2,15 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 
-require('dotenv').config();
-
 const auth = require('../auth');
 const handleError = require('../helpers/handleError');
 const FavoritesModel = require('../models/Favorites');
 const STATUSES = require('../constants/statuses');
 const REQUEST_DEFAULT_PARAMS = require('../constants/params');
+const { ERRORS } = require('../constants/text');
+const DBService = require('../services/DBService');
+
+const favoritesModelService = new DBService(FavoritesModel);
 
 router.get('/coins', auth, async (req, res) => {
   const { vs_currency = REQUEST_DEFAULT_PARAMS.vs_currency } = req.body;
@@ -24,10 +26,10 @@ router.get('/coins', auth, async (req, res) => {
   try {
     const { data } = await axios.get(`${process.env.COINGECKO_URL}/coins/markets`, { params });
 
-    const item = await FavoritesModel.findOne(email ? { userEmail: email } : { userMetamaskAddress: metamaskAddress });
+    const item = await favoritesModelService.findFavorites({ email, metamaskAddress });
 
     if (!item) {
-      await FavoritesModel.create(email ? { userEmail: email, favorites: [] } : { userMetamaskAddress: metamaskAddress, favorites: [] });
+      await favoritesModelService.createFavorites({ email, metamaskAddress, favorites: [] });
     } else {
       const newData = data.map(coin => {
         return {
@@ -41,9 +43,8 @@ router.get('/coins', auth, async (req, res) => {
     return res.status(STATUSES.OK).json({ data });
   } catch (error) {
     console.log(error);
-    if (error.response.status === STATUSES.TOO_MANY_REQUESTS)
-      return handleError(res, STATUSES.TOO_MANY_REQUESTS, 'Too many requests. Please try again later');
-    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, 'Internal server error');
+    if (error.response.status === STATUSES.TOO_MANY_REQUESTS) return handleError(res, STATUSES.TOO_MANY_REQUESTS, ERRORS.TOO_MANY_REQUESTS);
+    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);
   }
 });
 
@@ -55,9 +56,8 @@ router.get('/coins/:id', auth, async (req, res) => {
     res.status(STATUSES.OK).json({ data });
   } catch (error) {
     console.log(error);
-    if (error.response.status === STATUSES.TOO_MANY_REQUESTS)
-      return handleError(res, STATUSES.TOO_MANY_REQUESTS, 'Too many requests. Please try again later');
-    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, 'Internal server error');
+    if (error.response.status === STATUSES.TOO_MANY_REQUESTS) return handleError(res, STATUSES.TOO_MANY_REQUESTS, ERRORS.TOO_MANY_REQUESTS);
+    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);
   }
 });
 
@@ -66,7 +66,7 @@ router.patch('/favorites/:coinId', auth, async (req, res) => {
   const { email, metamaskAddress } = req.user;
 
   try {
-    const item = await FavoritesModel.findOne(email ? { userEmail: email } : { userMetamaskAddress: metamaskAddress });
+    const item = await favoritesModelService.findFavorites({ email, metamaskAddress });
 
     if (item) {
       if (!item.favorites.includes(coinId)) {
@@ -77,13 +77,13 @@ router.patch('/favorites/:coinId', auth, async (req, res) => {
         await item.save();
       }
     } else {
-      await FavoritesModel.create(email ? { userEmail: email, favorites: [coinId] } : { userMetamaskAddress: metamaskAddress, favorites: [coinId] });
+      await favoritesModelService.createFavorites({ email, metamaskAddress, favorites: [coinId] });
     }
 
     res.status(STATUSES.OK).json({ coinId });
   } catch (error) {
     console.log(error);
-    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, 'Internal server error');
+    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);
   }
 });
 
@@ -101,7 +101,7 @@ router.get('/chart/:id', auth, async (req, res) => {
     res.status(STATUSES.OK).json({ data });
   } catch (error) {
     console.log(error);
-    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, 'Internal server error');
+    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);
   }
 });
 
