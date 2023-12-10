@@ -1,4 +1,5 @@
 const express = require('express');
+const bcrypt = require('bcrypt');
 const router = express.Router();
 
 const UserModel = require('../models/Users');
@@ -10,15 +11,19 @@ const { ERRORS, SUCCESS } = require('../constants/text');
 const JWTService = require('../services/JWTService');
 const NodemailerService = require('../services/NodemailerService');
 
+const saltRounds = 10;
+
 router.post('/signup', async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
     const user = await UserModel.findOne({ email });
 
     if (user) return handleError(res, STATUSES.UNPROCESSABLE_CONTENT, ERRORS.ALREADY_HAVE_ACCOUNT);
 
-    await UserModel.create({ email, password, metamaskAddress: null });
+    await UserModel.create({ email, password: hashedPassword, metamaskAddress: null });
     sendResponse(res, STATUSES.CREATED, { message: SUCCESS.REGISTER_SUCCESSFUL });
   } catch (error) {
     handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);
@@ -33,7 +38,9 @@ router.post('/login', async (req, res) => {
 
     if (!user) return handleError(res, STATUSES.BAD_REQUEST, ERRORS.NO_SUCH_USER);
 
-    if (user.password !== password) return handleError(res, STATUSES.BAD_REQUEST, ERRORS.INCORRECT_EMAIL_OR_PASSWORD);
+    const result = await bcrypt.compare(password, user.password);
+
+    if (!result) return handleError(res, STATUSES.BAD_REQUEST, ERRORS.INCORRECT_EMAIL_OR_PASSWORD);
 
     const token = JWTService.generateToken({ email: user.email });
     sendResponse(res, STATUSES.OK, {
@@ -93,9 +100,11 @@ router.post('/reset-password', async (req, res) => {
 
   const verificationResult = JWTService.verifyToken(token);
 
+  const hashedPassword = await bcrypt.hash(password, saltRounds);
+
   if (verificationResult.valid) {
     try {
-      await UserModel.findByIdAndUpdate({ _id: id }, { password });
+      await UserModel.findByIdAndUpdate({ _id: id }, { password: hashedPassword });
       sendResponse(res, STATUSES.OK, { message: SUCCESS.PASSWORD_WAS_RESET });
     } catch (error) {
       handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);
