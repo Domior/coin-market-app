@@ -10,11 +10,14 @@ const STATUSES = require('../constants/statuses');
 const { ERRORS, SUCCESS } = require('../constants/text');
 const JWTService = require('../services/JWTService');
 const NodemailerService = require('../services/NodemailerService');
+const DBService = require('../services/DBService');
 const validateUserLoginData = require('../helpers/validateUserLoginData');
 const validateEmail = require('../helpers/validateEmail');
 const validatePassword = require('../helpers/validatePassword');
 
 const saltRounds = 10;
+
+const userModelService = new DBService(UserModel);
 
 router.post('/signup', async (req, res) => {
   const { email, password } = req.body;
@@ -26,11 +29,11 @@ router.post('/signup', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    const user = await UserModel.findOne({ email });
+    const user = await userModelService.findUser(email);
 
     if (user) return handleError(res, STATUSES.UNPROCESSABLE_CONTENT, ERRORS.ALREADY_HAVE_ACCOUNT);
 
-    await UserModel.create({ email, password: hashedPassword, metamaskAddress: null });
+    await userModelService.createUser({ email, password: hashedPassword, metamaskAddress: null });
     sendResponse(res, STATUSES.CREATED, { message: SUCCESS.REGISTER_SUCCESSFUL });
   } catch (error) {
     handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);
@@ -41,7 +44,7 @@ router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = await UserModel.findOne({ email });
+    const user = await userModelService.findUser(email);
 
     if (!user) return handleError(res, STATUSES.BAD_REQUEST, ERRORS.NO_SUCH_USER);
 
@@ -64,9 +67,9 @@ router.post('/login-metamask', async (req, res) => {
   const { metamaskAddress } = req.body;
 
   try {
-    const user = await UserModel.findOne({ metamaskAddress });
+    const user = await userModelService.findUser(metamaskAddress, false);
 
-    if (!user) await UserModel.create({ metamaskAddress, password: null, email: null });
+    if (!user) await userModelService.createUser({ metamaskAddress, password: null, email: null });
 
     const token = JWTService.generateToken({ metamaskAddress });
 
@@ -88,7 +91,7 @@ router.post('/forgot-password', async (req, res) => {
 
     if (!validationResult) return;
 
-    const user = await UserModel.findOne({ email });
+    const user = await userModelService.findUser(email);
 
     if (!user) return handleError(res, STATUSES.UNPROCESSABLE_CONTENT, ERRORS.NO_SUCH_USER);
 
@@ -119,7 +122,7 @@ router.post('/reset-password', async (req, res) => {
 
   if (verificationResult.valid) {
     try {
-      await UserModel.findByIdAndUpdate({ _id: id }, { password: hashedPassword });
+      await userModelService.updateUserPasswordById({ _id: id }, hashedPassword);
       sendResponse(res, STATUSES.OK, { message: SUCCESS.PASSWORD_WAS_RESET });
     } catch (error) {
       handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);

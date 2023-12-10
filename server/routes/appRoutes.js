@@ -8,6 +8,9 @@ const FavoritesModel = require('../models/Favorites');
 const STATUSES = require('../constants/statuses');
 const REQUEST_DEFAULT_PARAMS = require('../constants/params');
 const { ERRORS } = require('../constants/text');
+const DBService = require('../services/DBService');
+
+const favoritesModelService = new DBService(FavoritesModel);
 
 router.get('/coins', auth, async (req, res) => {
   const { vs_currency = REQUEST_DEFAULT_PARAMS.vs_currency } = req.body;
@@ -23,10 +26,10 @@ router.get('/coins', auth, async (req, res) => {
   try {
     const { data } = await axios.get(`${process.env.COINGECKO_URL}/coins/markets`, { params });
 
-    const item = await FavoritesModel.findOne(email ? { userEmail: email } : { userMetamaskAddress: metamaskAddress });
+    const item = await favoritesModelService.findFavorites({ email, metamaskAddress });
 
     if (!item) {
-      await FavoritesModel.create(email ? { userEmail: email, favorites: [] } : { userMetamaskAddress: metamaskAddress, favorites: [] });
+      await favoritesModelService.createFavorites({ email, metamaskAddress, favorites: [] });
     } else {
       const newData = data.map(coin => {
         return {
@@ -63,7 +66,7 @@ router.patch('/favorites/:coinId', auth, async (req, res) => {
   const { email, metamaskAddress } = req.user;
 
   try {
-    const item = await FavoritesModel.findOne(email ? { userEmail: email } : { userMetamaskAddress: metamaskAddress });
+    const item = await favoritesModelService.findFavorites({ email, metamaskAddress });
 
     if (item) {
       if (!item.favorites.includes(coinId)) {
@@ -74,7 +77,7 @@ router.patch('/favorites/:coinId', auth, async (req, res) => {
         await item.save();
       }
     } else {
-      await FavoritesModel.create(email ? { userEmail: email, favorites: [coinId] } : { userMetamaskAddress: metamaskAddress, favorites: [coinId] });
+      await favoritesModelService.createFavorites({ email, metamaskAddress, favorites: [coinId] });
     }
 
     res.status(STATUSES.OK).json({ coinId });
