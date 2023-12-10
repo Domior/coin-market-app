@@ -14,6 +14,8 @@ const ERRORS = {
   SOMETHING_WENT_WRONG: 'Something went wrong. Try again later',
   TOO_MANY_REQUESTS: 'Too many requests. Please try again later',
   INTERNAL_SERVER_ERROR: 'Internal server error',
+  INVALID_EMAIL_TYPE: 'Invalid email type',
+  INVALID_PASSWORD_TYPE: 'Invalid password type',
 };
 
 const SUCCESS = {

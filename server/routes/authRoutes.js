@@ -10,6 +10,9 @@ const STATUSES = require('../constants/statuses');
 const { ERRORS, SUCCESS } = require('../constants/text');
 const JWTService = require('../services/JWTService');
 const NodemailerService = require('../services/NodemailerService');
+const validateUserLoginData = require('../helpers/validateUserLoginData');
+const validateEmail = require('../helpers/validateEmail');
+const validatePassword = require('../helpers/validatePassword');
 
 const saltRounds = 10;
 
@@ -17,6 +20,10 @@ router.post('/signup', async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    const validationResult = await validateUserLoginData(res, email, password);
+
+    if (!validationResult) return;
+
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     const user = await UserModel.findOne({ email });
@@ -77,6 +84,10 @@ router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
 
   try {
+    const validationResult = await validateEmail(res, email);
+
+    if (!validationResult) return;
+
     const user = await UserModel.findOne({ email });
 
     if (!user) return handleError(res, STATUSES.UNPROCESSABLE_CONTENT, ERRORS.NO_SUCH_USER);
@@ -99,6 +110,10 @@ router.post('/reset-password', async (req, res) => {
   const { id, token, password } = req.body;
 
   const verificationResult = JWTService.verifyToken(token);
+
+  const validationResult = await validatePassword(res, password);
+
+  if (!validationResult) return;
 
   const hashedPassword = await bcrypt.hash(password, saltRounds);
 
