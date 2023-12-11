@@ -8,15 +8,11 @@ module.exports = callback => {
       await callback(req, res, next);
     } catch (error) {
       if (error.response && error.response.status === STATUSES.TOO_MANY_REQUESTS)
-        return handleError(
-          res,
-          STATUSES.TOO_MANY_REQUESTS,
-          ERRORS.TOO_MANY_REQUESTS,
-        );
+        return handleError(res, STATUSES.TOO_MANY_REQUESTS, ERRORS.TOO_MANY_REQUESTS);
 
-      if (error.code && error.message) return handleError(res, code, message);
+      if (error.code && error.message) return handleError(res, error.code, error.message);
 
-      handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);
+      return handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);
     }
   };
 };
