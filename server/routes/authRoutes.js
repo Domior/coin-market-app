@@ -14,15 +14,17 @@ const DBService = require('../services/DBService');
 const validateUserLoginData = require('../helpers/validateUserLoginData');
 const validateEmail = require('../helpers/validateEmail');
 const validatePassword = require('../helpers/validatePassword');
+const handleCallback = require('../helpers/handleCallback');
 
 const saltRounds = 10;
 
 const userModelService = new DBService(UserModel);
 
-router.post('/signup', async (req, res) => {
-  const { email, password } = req.body;
+router.post(
+  '/signup',
+  handleCallback(async (req, res) => {
+    const { email, password } = req.body;
 
-  try {
     const validationResult = await validateUserLoginData(res, email, password);
 
     if (!validationResult) return;
@@ -33,17 +35,20 @@ router.post('/signup', async (req, res) => {
 
     if (user) return handleError(res, STATUSES.UNPROCESSABLE_CONTENT, ERRORS.ALREADY_HAVE_ACCOUNT);
 
-    await userModelService.createUser({ email, password: hashedPassword, metamaskAddress: null });
+    await userModelService.createUser({
+      email,
+      password: hashedPassword,
+      metamaskAddress: null,
+    });
     sendResponse(res, STATUSES.CREATED, { message: SUCCESS.REGISTER_SUCCESSFUL });
-  } catch (error) {
-    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);
-  }
-});
+  }),
+);
 
-router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+router.post(
+  '/login',
+  handleCallback(async (req, res) => {
+    const { email, password } = req.body;
 
-  try {
     const user = await userModelService.findUser(email);
 
     if (!user) return handleError(res, STATUSES.BAD_REQUEST, ERRORS.NO_SUCH_USER);
@@ -58,18 +63,22 @@ router.post('/login', async (req, res) => {
       email: user.email,
       token,
     });
-  } catch (error) {
-    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);
-  }
-});
+  }),
+);
 
-router.post('/login-metamask', async (req, res) => {
-  const { metamaskAddress } = req.body;
+router.post(
+  '/login-metamask',
+  handleCallback(async (req, res) => {
+    const { metamaskAddress } = req.body;
 
-  try {
     const user = await userModelService.findUser(metamaskAddress, false);
 
-    if (!user) await userModelService.createUser({ metamaskAddress, password: null, email: null });
+    if (!user)
+      await userModelService.createUser({
+        metamaskAddress,
+        password: null,
+        email: null,
+      });
 
     const token = JWTService.generateToken({ metamaskAddress });
 
@@ -78,15 +87,14 @@ router.post('/login-metamask', async (req, res) => {
       metamaskAddress,
       token,
     });
-  } catch (error) {
-    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);
-  }
-});
+  }),
+);
 
-router.post('/forgot-password', async (req, res) => {
-  const { email } = req.body;
+router.post(
+  '/forgot-password',
+  handleCallback(async (req, res) => {
+    const { email } = req.body;
 
-  try {
     const validationResult = await validateEmail(res, email);
 
     if (!validationResult) return;
@@ -104,40 +112,37 @@ router.post('/forgot-password', async (req, res) => {
       subject: 'Reset password',
       text: `Follow link to reset password: ${process.env.FRONT_END_BASE_URL}/reset-password/${user._id}?token=${encodedToken}`,
     });
-  } catch (error) {
-    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);
-  }
-});
+  }),
+);
 
-router.post('/reset-password', async (req, res) => {
-  const { id, token, password } = req.body;
+router.post(
+  '/reset-password',
+  handleCallback(async (req, res) => {
+    const { id, token, password } = req.body;
 
-  const verificationResult = JWTService.verifyToken(token);
+    const verificationResult = JWTService.verifyToken(token);
 
-  const validationResult = await validatePassword(res, password);
+    const validationResult = await validatePassword(res, password);
 
-  if (!validationResult) return;
+    if (!validationResult) return;
 
-  const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-  if (verificationResult.valid) {
-    try {
+    if (verificationResult.valid) {
       await userModelService.updateUserPasswordById({ _id: id }, hashedPassword);
       sendResponse(res, STATUSES.OK, { message: SUCCESS.PASSWORD_WAS_RESET });
-    } catch (error) {
-      handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);
+    } else {
+      handleError(res, STATUSES.BAD_REQUEST, ERRORS.TOKEN_INVALID);
     }
-  } else {
-    handleError(res, STATUSES.BAD_REQUEST, ERRORS.TOKEN_INVALID);
-  }
-});
+  }),
+);
 
-router.delete('/logout', auth, async (req, res) => {
-  try {
+router.delete(
+  '/logout',
+  auth,
+  handleCallback(async (req, res) => {
     sendResponse(res, STATUSES.OK, { message: SUCCESS.LOGOUT_SUCCESSFUL });
-  } catch (error) {
-    handleError(res, STATUSES.INTERNAL_SERVER_ERROR, ERRORS.INTERNAL_SERVER_ERROR);
-  }
-});
+  }),
+);
 
 module.exports = router;
